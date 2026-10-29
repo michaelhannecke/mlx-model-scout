@@ -1,0 +1,83 @@
+# Datasette metadata for the audit log (read-only viewer).
+#   make audit-ui            -> http://127.0.0.1:8001
+# Canned queries appear on the database page ("scout") and are the best views for screenshots.
+# Format: Datasette 0.65 `--metadata` (pinned in the Makefile).
+
+title: MLX Model Scout - audit log
+description: >-
+  Every workflow run, LLM call, tool call and human-in-the-loop decision of the MCP server.
+  Prompts are stored truncated + SHA-256 unless SCOUT_LOG_FULL_MESSAGES=true.
+
+databases:
+  scout:
+    queries:
+      runs:
+        title: Workflow runs
+        description: One row per recommendation run with the number of LLM calls, tool calls and user decisions. Click a timeline link for the details.
+        sql: |-
+          select
+            r.id as run_id,
+            'http://127.0.0.1:8001/scout/run_timeline?run_id=' || r.id as timeline,
+            r.status,
+            json_extract(r.input_json, '$.use_case') as use_case,
+            json_extract(r.input_json, '$.profile_id') as profile,
+            r.started_at,
+            round((julianday(r.finished_at) - julianday(r.started_at)) * 86400, 1) as seconds,
+            (select count(*) from llm_calls l where l.run_id = r.id) as llm_calls,
+            (select count(*) from tool_calls t where t.run_id = r.id) as tool_calls,
+            (select count(*) from hitl_decisions h where h.run_id = r.id) as user_decisions
+          from workflow_runs r
+          order by r.started_at desc
+
+      run_timeline:
+        title: Run timeline
+        description: Everything that happened in one run, in order. Paste a run_id from "Workflow runs".
+        sql: |-
+          select created_at, 'llm' as kind, agent as name, status,
+                 latency_ms as ms, prompt_tokens || ' -> ' || completion_tokens as tokens,
+                 substr(response, 1, 160) as detail
+          from llm_calls where run_id = :run_id
+          union all
+          select created_at, 'tool', tool, status, duration_ms, null, result_summary
+          from tool_calls where run_id = :run_id
+          union all
+          select created_at, 'user decision', step, null, null, null, decision_json
+          from hitl_decisions where run_id = :run_id
+          order by created_at
+
+      llm_by_agent:
+        title: LLM calls per agent
+        description: Calls, validation retries, errors, latency and tokens per agent (planner = orchestrator).
+        sql: |-
+          select
+            agent,
+            count(*) as calls,
+            sum(status = 'validation_error') as validation_retries,
+            sum(status = 'error') as errors,
+            round(avg(latency_ms)) as avg_ms,
+            sum(prompt_tokens) as prompt_tokens,
+            sum(completion_tokens) as completion_tokens
+          from llm_calls
+          group by agent
+          order by calls desc
+
+      user_decisions:
+        title: Human-in-the-loop decisions
+        description: Every checkpoint answer (candidate selection, report approval, client confirmations).
+        sql: |-
+          select created_at, run_id, step, decision_json, options_json
+          from hitl_decisions
+          order by created_at desc
+
+      saved_reports:
+        title: Saved reports
+        description: Reports with approval flag and the ranked repos.
+        sql: |-
+          select
+            id, run_id, approved, created_at,
+            json_extract(report_json, '$.use_case') as use_case,
+            json_extract(report_json, '$.generated_by') as generated_by,
+            (select group_concat(json_extract(value, '$.rank') || '. ' || json_extract(value, '$.repo_id'), char(10))
+               from json_each(report_json, '$.recommendations')) as ranking
+          from reports
+          order by created_at desc

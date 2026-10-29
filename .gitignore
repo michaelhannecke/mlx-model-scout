@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+wheels/
+
+# Environments
+.venv/
+.env
+.env.*
+!.env.sample
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Runtime data (SQLite audit log may contain prompts)
+data/*
+!data/.gitkeep
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# Internal working documents (kept locally, not published)
+.claude/
+CLAUDE.md
+docs/PROGRESS.md
+docs/DEMO.md
+docs/COURSE_REQUIREMENTS.md

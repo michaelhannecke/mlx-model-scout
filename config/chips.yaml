@@ -1,0 +1,63 @@
+# Apple Silicon reference data used by the fit calculator.
+#
+# memory_bandwidth_gbs: peak unified-memory bandwidth in GB/s (vendor spec).
+# Values marked `verified: false` are placeholders and MUST be checked against
+# Apple's tech specs before relying on speed estimates. A chip with
+# memory_bandwidth_gbs: null still gets a memory-fit verdict, but no tok/s estimate.
+#
+# Keys are referenced from hardware_profiles.yaml (field `chip`).
+
+chips:
+  m1-max-32c:
+    display_name: "M1 Max (32-core GPU)"
+    memory_bandwidth_gbs: 400
+    verified: true
+  m1-ultra-64c:
+    display_name: "M1 Ultra (64-core GPU)"
+    memory_bandwidth_gbs: 800
+    verified: true
+  m2-max-38c:
+    display_name: "M2 Max (38-core GPU)"
+    memory_bandwidth_gbs: 400
+    verified: true
+  m2-ultra-76c:
+    display_name: "M2 Ultra (76-core GPU)"
+    memory_bandwidth_gbs: 800
+    verified: true
+  m3-max-40c:
+    display_name: "M3 Max (40-core GPU)"
+    memory_bandwidth_gbs: 400
+    verified: true
+  m3-ultra-80c:
+    display_name: "M3 Ultra (80-core GPU)"
+    memory_bandwidth_gbs: 819
+    verified: true
+  m4-pro-20c:
+    display_name: "M4 Pro (20-core GPU)"
+    memory_bandwidth_gbs: 273
+    verified: true
+  m4-max-32c:
+    display_name: "M4 Max (32-core GPU)"
+    memory_bandwidth_gbs: 410
+    verified: true
+  m4-max-40c:
+    display_name: "M4 Max (40-core GPU)"
+    memory_bandwidth_gbs: 546
+    verified: true
+  # M5 Pro/Max: Apple tech specs, MacBook Pro 14"/16" (support.apple.com/en-us/126318, 126319)
+  m5-pro-16c:
+    display_name: "M5 Pro (16-core GPU)"
+    memory_bandwidth_gbs: 307
+    verified: true
+  m5-pro-20c:
+    display_name: "M5 Pro (20-core GPU)"
+    memory_bandwidth_gbs: 307
+    verified: true
+  m5-max-32c:
+    display_name: "M5 Max (32-core GPU)"
+    memory_bandwidth_gbs: 460
+    verified: true
+  m5-max-40c:
+    display_name: "M5 Max (40-core GPU)"
+    memory_bandwidth_gbs: 614
+    verified: true

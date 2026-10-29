@@ -1,0 +1,51 @@
+# Compose stack: MCP server (HTTP) + Datasette as read-only UI on the SQLite audit DB.
+#
+# Apple container has NO native compose support (upstream PR #239 was closed in
+# April 2026). Options:
+#   a) Community plugin:  container compose up        (github.com/andrew-waters/compose)
+#   b) apple-compose:     apple-compose up            (pull-only: build image first!)
+#   c) Docker/Podman:     docker compose up --build
+#
+# For a) and b) build the image first:   container build -t mlx-model-scout:latest .
+# Unsupported keys are skipped with a warning by those tools (e.g. restart, build).
+
+services:
+  scout:
+    image: mlx-model-scout:latest
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"   # localhost only: the HTTP endpoint has NO auth
+    # No env_file on purpose: the host .env contains host paths/stdio settings that
+    # would override the image defaults. Only container-relevant values are passed.
+    environment:
+      SCOUT_TRANSPORT: http
+      SCOUT_HTTP_HOST: 0.0.0.0
+      SCOUT_DB_PATH: /data/scout.db
+      SCOUT_LLM_MODEL: ${SCOUT_LLM_MODEL:-Qwen3-30B-A3B-Instruct-2507-4bit}
+      SCOUT_LLM_API_KEY: ${SCOUT_LLM_API_KEY:-not-needed}
+      SCOUT_LOG_FULL_MESSAGES: ${SCOUT_LOG_FULL_MESSAGES:-false}
+      # Host address of the LLM server (omlx / mlx_lm.server) as seen from inside the container.
+      #  Docker Desktop/OrbStack: http://host.docker.internal:8000/v1
+      #  Apple container: gateway IP of the container network (check `container network list`),
+      #  and the LLM server must listen on that interface - NOT on 0.0.0.0 towards your LAN.
+      SCOUT_LLM_BASE_URL: ${SCOUT_LLM_BASE_URL_CONTAINER:-http://host.docker.internal:8000/v1}
+      # Each Apple container is its own VM: SQLite WAL shared memory does not work
+      # across VMs on a shared volume -> rollback journal instead.
+      SCOUT_DB_WAL: "false"
+    volumes:
+      - scout-data:/data
+    restart: unless-stopped
+
+  datasette:
+    image: datasetteproject/datasette:latest
+    # --nolock: open read-only even if the server holds a lock. Read-only viewer, may lag.
+    command: ["datasette", "serve", "/data/scout.db", "--nolock", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - scout-data:/data
+    depends_on:
+      - scout
+
+volumes:
+  scout-data:

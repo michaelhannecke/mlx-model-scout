@@ -1,0 +1,43 @@
+# Editable hardware profiles (real or hypothetical machines).
+#
+# Fields:
+#   id                 unique slug, used as tool argument
+#   name               display name
+#   chip               key from config/chips.yaml
+#   unified_memory_gb  installed unified memory
+#   wired_limit_gb     optional; GPU wired-memory limit (sysctl iogpu.wired_limit_mb / 1024).
+#                      If omitted, SCOUT_DEFAULT_WIRED_FRACTION * unified_memory_gb is used.
+#   reserved_gb        optional; memory you want to keep free for OS/apps (default 0)
+#   nodes              optional; >1 = cluster. Fit is computed against the summed
+#                      memory, speed estimates are NOT produced for clusters (interconnect-bound).
+#   notes              free text
+
+profiles:
+  - id: studio-m4max-64
+    name: "Mac Studio M4 Max 64 GB"
+    chip: m4-max-40c
+    unified_memory_gb: 64
+    reserved_gb: 8
+    notes: "Desk workstation / cluster node"
+
+  - id: mbp-m5max-128
+    name: "MacBook Pro M5 Max 128 GB"
+    chip: m5-max-40c
+    unified_memory_gb: 128
+    reserved_gb: 16
+    notes: "Daily driver; shares memory with Office/Teams/IDE"
+
+  - id: mini-m4pro-64
+    name: "Mac mini M4 Pro 64 GB"
+    chip: m4-pro-20c
+    unified_memory_gb: 64
+    reserved_gb: 6
+    notes: "Hypothetical small-office node"
+
+  - id: cluster-2x-studio-m4max-64
+    name: "2x Mac Studio M4 Max 64 GB (TB5 cluster)"
+    chip: m4-max-40c
+    unified_memory_gb: 64
+    nodes: 2
+    reserved_gb: 8
+    notes: "Hypothetical 2-node cluster; memory fit only"
